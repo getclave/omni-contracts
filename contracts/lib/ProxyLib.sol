@@ -17,7 +17,11 @@ library ProxyLib {
     /// @param initData The initialization data for the implementation contract.
     /// @return alreadyDeployed A boolean indicating if the contract was already deployed.
     /// @return account The address of the new contract or the existing contract.
-    function deployProxy(address implementation, bytes32 salt, bytes memory initData) internal returns (bool alreadyDeployed, address payable account) {
+    function deployProxy(
+        address implementation,
+        bytes32 salt,
+        bytes memory initData
+    ) internal returns (bool alreadyDeployed, address payable account) {
         // Check if the contract is already deployed
         account = predictProxyAddress(implementation, salt, initData);
         alreadyDeployed = account.code.length > 0;
@@ -27,7 +31,7 @@ library ProxyLib {
             new NexusProxy{ salt: salt, value: msg.value }(implementation, abi.encodeCall(INexus.initializeAccount, initData));
         } else {
             // Forward the value to the existing contract
-            (bool success,) = account.call{ value: msg.value }("");
+            (bool success, ) = account.call{ value: msg.value }("");
             require(success, EthTransferFailed());
         }
     }
@@ -37,10 +41,15 @@ library ProxyLib {
     /// @param salt The salt used for the contract creation.
     /// @param initData The initialization data for the implementation contract.
     /// @return predictedAddress The predicted address of the new contract.
-    function predictProxyAddress(address implementation, bytes32 salt, bytes memory initData) internal view returns (address payable predictedAddress) {
+    function predictProxyAddress(
+        address implementation,
+        bytes32 salt,
+        bytes memory initData
+    ) internal view returns (address payable predictedAddress) {
         // Get the init code hash
-        bytes32 initCodeHash =
-            keccak256(abi.encodePacked(type(NexusProxy).creationCode, abi.encode(implementation, abi.encodeCall(INexus.initializeAccount, initData))));
+        bytes32 initCodeHash = keccak256(
+            abi.encodePacked(type(NexusProxy).creationCode, abi.encode(implementation, abi.encodeCall(INexus.initializeAccount, initData)))
+        );
 
         // Compute the predicted address
         predictedAddress = payable(address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xff), address(this), salt, initCodeHash))))));

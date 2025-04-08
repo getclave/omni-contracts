@@ -15,12 +15,7 @@ pragma solidity ^0.8.27;
 import { ModuleManager } from "../base/ModuleManager.sol";
 import { IModule } from "../interfaces/modules/IModule.sol";
 import { IERC7484 } from "../interfaces/IERC7484.sol";
-import {
-    MODULE_TYPE_VALIDATOR,
-    MODULE_TYPE_EXECUTOR,
-    MODULE_TYPE_FALLBACK,
-    MODULE_TYPE_HOOK
-} from "../types/Constants.sol";
+import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK } from "../types/Constants.sol";
 
 /// @title NexusBootstrap Configuration for Nexus
 /// @notice Provides configuration and initialization for Nexus smart accounts.
@@ -29,27 +24,26 @@ import {
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-    struct BootstrapConfig {
-        address module;
-        bytes data;
-    }
+struct BootstrapConfig {
+    address module;
+    bytes data;
+}
 
-    struct BootstrapPreValidationHookConfig {
-        uint256 hookType;
-        address module;
-        bytes data;
-    }
+struct BootstrapPreValidationHookConfig {
+    uint256 hookType;
+    address module;
+    bytes data;
+}
 
-    struct RegistryConfig {
-        IERC7484 registry;
-        address[] attesters;
-        uint8 threshold;
-    }
+struct RegistryConfig {
+    IERC7484 registry;
+    address[] attesters;
+    uint8 threshold;
+}
 
 /// @title NexusBootstrap
 /// @notice Manages the installation of modules into Nexus smart accounts using delegatecalls.
 contract NexusBootstrap is ModuleManager {
-
     constructor(address defaultValidator, bytes memory initData) ModuleManager(defaultValidator, initData) {}
 
     modifier _withInitSentinelLists() {
@@ -63,12 +57,7 @@ contract NexusBootstrap is ModuleManager {
     /// @dev For gas savings purposes this method does not initialize the registry.
     /// @dev The registry should be initialized via the `setRegistry` function on the Nexus contract later if needed.
     /// @param data The initialization data for the default validator module.
-    function initNexusWithDefaultValidator(
-        bytes calldata data
-    )
-        external
-        payable
-    {
+    function initNexusWithDefaultValidator(bytes calldata data) external payable {
         IModule(_DEFAULT_VALIDATOR).onInstall(data);
     }
 
@@ -91,23 +80,16 @@ contract NexusBootstrap is ModuleManager {
         BootstrapConfig calldata hook,
         BootstrapConfig[] calldata fallbacks,
         BootstrapPreValidationHookConfig[] calldata preValidationHooks
-    )
-        external
-        payable
-    {
-        RegistryConfig memory registryConfig = RegistryConfig({
-            registry: IERC7484(address(0)),
-            attesters: new address[](0),
-            threshold: 0
-        });
+    ) external payable {
+        RegistryConfig memory registryConfig = RegistryConfig({ registry: IERC7484(address(0)), attesters: new address[](0), threshold: 0 });
 
         _initNexusWithDefaultValidatorAndOtherModules(
-            defaultValidatorInitData, 
+            defaultValidatorInitData,
             validators,
-            executors, 
-            hook, 
-            fallbacks, 
-            preValidationHooks, 
+            executors,
+            hook,
+            fallbacks,
+            preValidationHooks,
             registryConfig
         );
     }
@@ -129,16 +111,13 @@ contract NexusBootstrap is ModuleManager {
         BootstrapConfig[] calldata fallbacks,
         BootstrapPreValidationHookConfig[] calldata preValidationHooks,
         RegistryConfig memory registryConfig
-    )
-        external
-        payable
-    {
+    ) external payable {
         _initNexusWithDefaultValidatorAndOtherModules(
             defaultValidatorInitData,
             validators,
-            executors, 
-            hook, 
-            fallbacks, 
+            executors,
+            hook,
+            fallbacks,
             preValidationHooks,
             registryConfig
         );
@@ -150,12 +129,9 @@ contract NexusBootstrap is ModuleManager {
         BootstrapConfig[] calldata executors,
         BootstrapConfig calldata hook,
         BootstrapConfig[] calldata fallbacks,
-        BootstrapPreValidationHookConfig[] calldata preValidationHooks, 
+        BootstrapPreValidationHookConfig[] calldata preValidationHooks,
         RegistryConfig memory registryConfig
-    )
-        internal
-        _withInitSentinelLists
-    {
+    ) internal _withInitSentinelLists {
         _configureRegistry(registryConfig.registry, registryConfig.attesters, registryConfig.threshold);
 
         IModule(_DEFAULT_VALIDATOR).onInstall(defaultValidatorInitData);
@@ -183,16 +159,12 @@ contract NexusBootstrap is ModuleManager {
             if (fallbacks[i].module == address(0)) continue;
             _installFallbackHandler(fallbacks[i].module, fallbacks[i].data);
             emit ModuleInstalled(MODULE_TYPE_FALLBACK, fallbacks[i].module);
-        } 
+        }
 
         // Initialize pre-validation hooks
         for (uint256 i; i < preValidationHooks.length; i++) {
             if (preValidationHooks[i].module == address(0)) continue;
-            _installPreValidationHook(
-                preValidationHooks[i].hookType,
-                preValidationHooks[i].module,
-                preValidationHooks[i].data
-            );
+            _installPreValidationHook(preValidationHooks[i].hookType, preValidationHooks[i].module, preValidationHooks[i].data);
             emit ModuleInstalled(preValidationHooks[i].hookType, preValidationHooks[i].module);
         }
     }
@@ -205,18 +177,8 @@ contract NexusBootstrap is ModuleManager {
     /// @dev Intended to be called by the Nexus with a delegatecall.
     /// @param validator The address of the validator module. Should not be the default validator.
     /// @param data The initialization data for the validator module.
-    function initNexusWithSingleValidatorNoRegistry(
-        address validator,
-        bytes calldata data
-    )
-        external
-        payable
-    {
-        RegistryConfig memory registryConfig = RegistryConfig({  
-            registry: IERC7484(address(0)),
-            attesters: new address[](0),
-            threshold: 0
-        });
+    function initNexusWithSingleValidatorNoRegistry(address validator, bytes calldata data) external payable {
+        RegistryConfig memory registryConfig = RegistryConfig({ registry: IERC7484(address(0)), attesters: new address[](0), threshold: 0 });
         _initNexusWithSingleValidator(validator, data, registryConfig);
     }
 
@@ -225,14 +187,7 @@ contract NexusBootstrap is ModuleManager {
     /// @param validator The address of the validator module. Should not be the default validator.
     /// @param data The initialization data for the validator module.
     /// @param registryConfig The registry configuration.
-    function initNexusWithSingleValidator(
-        address validator,
-        bytes calldata data,
-        RegistryConfig memory registryConfig
-    )
-        external
-        payable
-    {
+    function initNexusWithSingleValidator(address validator, bytes calldata data, RegistryConfig memory registryConfig) external payable {
         _initNexusWithSingleValidator(validator, data, registryConfig);
     }
 
@@ -240,10 +195,7 @@ contract NexusBootstrap is ModuleManager {
         address validator,
         bytes calldata data,
         RegistryConfig memory registryConfig
-    )
-        internal
-        _withInitSentinelLists
-    {
+    ) internal _withInitSentinelLists {
         _configureRegistry(registryConfig.registry, registryConfig.attesters, registryConfig.threshold);
         _installValidator(validator, data);
         emit ModuleInstalled(MODULE_TYPE_VALIDATOR, validator);
@@ -266,15 +218,8 @@ contract NexusBootstrap is ModuleManager {
         BootstrapConfig calldata hook,
         BootstrapConfig[] calldata fallbacks,
         BootstrapPreValidationHookConfig[] calldata preValidationHooks
-    )
-        external
-        payable
-    {
-        RegistryConfig memory registryConfig = RegistryConfig({
-            registry: IERC7484(address(0)),
-            attesters: new address[](0),
-            threshold: 0
-        });
+    ) external payable {
+        RegistryConfig memory registryConfig = RegistryConfig({ registry: IERC7484(address(0)), attesters: new address[](0), threshold: 0 });
 
         _initNexus(validators, executors, hook, fallbacks, preValidationHooks, registryConfig);
     }
@@ -294,10 +239,7 @@ contract NexusBootstrap is ModuleManager {
         BootstrapConfig[] calldata fallbacks,
         BootstrapPreValidationHookConfig[] calldata preValidationHooks,
         RegistryConfig memory registryConfig
-    )
-        external
-        payable
-    {
+    ) external payable {
         _initNexus({
             validators: validators,
             executors: executors,
@@ -315,10 +257,7 @@ contract NexusBootstrap is ModuleManager {
         BootstrapConfig[] calldata fallbacks,
         BootstrapPreValidationHookConfig[] calldata preValidationHooks,
         RegistryConfig memory registryConfig
-    )
-        internal
-        _withInitSentinelLists
-    {
+    ) internal _withInitSentinelLists {
         _configureRegistry(registryConfig.registry, registryConfig.attesters, registryConfig.threshold);
 
         // Initialize validators
@@ -350,11 +289,7 @@ contract NexusBootstrap is ModuleManager {
         // Initialize pre-validation hooks
         for (uint256 i = 0; i < preValidationHooks.length; i++) {
             if (preValidationHooks[i].module == address(0)) continue;
-            _installPreValidationHook(
-                preValidationHooks[i].hookType,
-                preValidationHooks[i].module,
-                preValidationHooks[i].data
-            );
+            _installPreValidationHook(preValidationHooks[i].hookType, preValidationHooks[i].module, preValidationHooks[i].data);
             emit ModuleInstalled(preValidationHooks[i].hookType, preValidationHooks[i].module);
         }
     }
@@ -367,18 +302,8 @@ contract NexusBootstrap is ModuleManager {
     /// @dev Intended to be called by the Nexus with a delegatecall.
     /// @param validators The configuration array for validator modules. Should not contain the default validator.
     /// @param hook The configuration for the hook module.
-    function initNexusScopedNoRegistry(
-        BootstrapConfig[] calldata validators,
-        BootstrapConfig calldata hook
-    )
-        external
-        payable
-    {
-        RegistryConfig memory registryConfig = RegistryConfig({
-            registry: IERC7484(address(0)),
-            attesters: new address[](0),
-            threshold: 0
-        });
+    function initNexusScopedNoRegistry(BootstrapConfig[] calldata validators, BootstrapConfig calldata hook) external payable {
+        RegistryConfig memory registryConfig = RegistryConfig({ registry: IERC7484(address(0)), attesters: new address[](0), threshold: 0 });
         _initNexusScoped(validators, hook, registryConfig);
     }
 
@@ -391,10 +316,7 @@ contract NexusBootstrap is ModuleManager {
         BootstrapConfig[] calldata validators,
         BootstrapConfig calldata hook,
         RegistryConfig memory registryConfig
-    )
-        external
-        payable
-    {
+    ) external payable {
         _initNexusScoped(validators, hook, registryConfig);
     }
 
@@ -406,10 +328,7 @@ contract NexusBootstrap is ModuleManager {
         BootstrapConfig[] calldata validators,
         BootstrapConfig calldata hook,
         RegistryConfig memory registryConfig
-    )
-        internal
-        _withInitSentinelLists
-    {
+    ) internal _withInitSentinelLists {
         _configureRegistry(registryConfig.registry, registryConfig.attesters, registryConfig.threshold);
 
         // Initialize validators
@@ -431,7 +350,6 @@ contract NexusBootstrap is ModuleManager {
         version = "1.2.1";
     }
 
-    
     // required implementations. Are not used.
     function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable override {
         // do nothing
@@ -441,7 +359,11 @@ contract NexusBootstrap is ModuleManager {
         // do nothing
     }
 
-    function isModuleInstalled(uint256 moduleTypeId, address module, bytes calldata additionalContext) external view override returns (bool installed) {
+    function isModuleInstalled(
+        uint256 moduleTypeId,
+        address module,
+        bytes calldata additionalContext
+    ) external view override returns (bool installed) {
         return false;
     }
 }

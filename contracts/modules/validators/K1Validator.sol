@@ -40,7 +40,7 @@ contract K1Validator is IValidator, ERC7739Validator {
     //////////////////////////////////////////////////////////////////////////*/
 
     /// @notice Mapping of smart account addresses to their respective owner addresses
-    mapping(address => address) internal smartAccountOwners;
+    mapping(address => address) internal _smartAccountOwners;
 
     EnumerableSet.AddressSet private _safeSenders;
 
@@ -165,11 +165,7 @@ contract K1Validator is IValidator, ERC7739Validator {
      *  - 0x7739000X if this is the ERC-7739 support detection request.
      *  Where X is the version of the ERC-7739 support.
      */
-    function isValidSignatureWithSender(
-        address sender,
-        bytes32 hash,
-        bytes calldata signature
-    ) external view virtual override returns (bytes4) {
+    function isValidSignatureWithSender(address sender, bytes32 hash, bytes calldata signature) external view virtual override returns (bytes4) {
         return _erc1271IsValidSignatureWithSender(sender, hash, _erc1271UnwrapSignature(signature));
     }
 

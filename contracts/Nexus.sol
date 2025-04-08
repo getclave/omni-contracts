@@ -21,29 +21,8 @@ import { IERC7484 } from "./interfaces/IERC7484.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { ExecutionHelper } from "./base/ExecutionHelper.sol";
 import { IValidator } from "./interfaces/modules/IValidator.sol";
-import {
-    MODULE_TYPE_VALIDATOR,
-    MODULE_TYPE_EXECUTOR,
-    MODULE_TYPE_FALLBACK,
-    MODULE_TYPE_HOOK,
-    MODULE_TYPE_MULTI,
-    MODULE_TYPE_PREVALIDATION_HOOK_ERC1271,
-    MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
-    SUPPORTS_ERC7739,
-    VALIDATION_SUCCESS,
-    VALIDATION_FAILED
-} from "./types/Constants.sol";
-import {
-    ModeLib,
-    ExecutionMode,
-    ExecType,
-    CallType,
-    CALLTYPE_BATCH,
-    CALLTYPE_SINGLE,
-    CALLTYPE_DELEGATECALL,
-    EXECTYPE_DEFAULT,
-    EXECTYPE_TRY
-} from "./lib/ModeLib.sol";
+import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MODULE_TYPE_MULTI, MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, SUPPORTS_ERC7739, VALIDATION_SUCCESS, VALIDATION_FAILED } from "./types/Constants.sol";
+import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "./lib/ModeLib.sol";
 import { NonceLib } from "./lib/NonceLib.sol";
 import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/SentinelList.sol";
 import { Initializable } from "./lib/Initializable.sol";
@@ -75,13 +54,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     event EmergencyHookUninstallRequestReset(address hook, uint256 timestamp);
 
     /// @notice Initializes the smart account with the specified entry point.
-    constructor(
-        address anEntryPoint,
-        address defaultValidator,
-        bytes memory initData
-    )
-        ModuleManager(defaultValidator, initData)
-    {
+    constructor(address anEntryPoint, address defaultValidator, bytes memory initData) ModuleManager(defaultValidator, initData) {
         require(address(anEntryPoint) != address(0), EntryPointCanNotBeZero());
         _ENTRYPOINT = anEntryPoint;
     }
@@ -108,19 +81,13 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         PackedUserOperation calldata op,
         bytes32 userOpHash,
         uint256 missingAccountFunds
-    )
-        external
-        virtual
-        payPrefund(missingAccountFunds)
-        onlyEntryPoint
-        returns (uint256 validationData)
-    {
+    ) external virtual payPrefund(missingAccountFunds) onlyEntryPoint returns (uint256 validationData) {
         address validator;
         PackedUserOperation memory userOp = op;
-    
+
         if (op.nonce.isValidateMode()) {
             // do nothing special. This is introduced
-            // to quickly identify the most commonly used 
+            // to quickly identify the most commonly used
             // mode which is validate mode
             // and avoid checking two above conditions
         } else if (op.nonce.isModuleEnableMode()) {
@@ -167,14 +134,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     function executeFromExecutor(
         ExecutionMode mode,
         bytes calldata executionCalldata
-    )
-        external
-        payable
-        onlyExecutorModule
-        withHook
-        withRegistry(msg.sender, MODULE_TYPE_EXECUTOR)
-        returns (bytes[] memory returnData)
-    {
+    ) external payable onlyExecutorModule withHook withRegistry(msg.sender, MODULE_TYPE_EXECUTOR) returns (bytes[] memory returnData) {
         (CallType callType, ExecType execType) = mode.decodeBasic();
         // check if calltype is batch or single or delegate call
         if (callType == CALLTYPE_SINGLE) {
@@ -250,16 +210,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param module The address of the module to uninstall.
     /// @param deInitData De-initialization data for the module.
     /// @dev Ensures that the operation is authorized and valid before proceeding with the uninstallation.
-    function uninstallModule(
-        uint256 moduleTypeId,
-        address module,
-        bytes calldata deInitData
-    ) 
-        external 
-        payable
-        onlyEntryPointOrSelf
-        withHook 
-    {
+    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable onlyEntryPointOrSelf withHook {
         require(_isModuleInstalled(moduleTypeId, module, deInitData), ModuleNotInstalled(moduleTypeId, module));
 
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
@@ -270,7 +221,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
             _uninstallFallbackHandler(module, deInitData);
         } else if (
-            moduleTypeId == MODULE_TYPE_HOOK || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
+            moduleTypeId == MODULE_TYPE_HOOK ||
+            moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 ||
+            moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
         ) {
             _uninstallHook(module, moduleTypeId, deInitData);
         }
@@ -343,7 +296,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         (bool success, ) = bootstrap.delegatecall(bootstrapCall);
 
         require(success, NexusInitializationFailed());
-        if(!_amIERC7702()) {
+        if (!_amIERC7702()) {
             require(isInitialized(), AccountNotInitialized());
         }
     }
@@ -374,7 +327,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         }
         // else proceed with normal signature verification
         // First 20 bytes of data will be validator address and rest of the bytes is complete signature.
-        address validator = _handleValidator(address(bytes20(signature[0:20]))); 
+        address validator = _handleValidator(address(bytes20(signature[0:20])));
         bytes memory signature_;
         (hash, signature_) = _withPreValidationHook(hash, signature[20:]);
         try IValidator(validator).isValidSignatureWithSender(msg.sender, hash, signature_) returns (bytes4 res) {
@@ -402,14 +355,15 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param moduleTypeId The identifier of the module type to check.
     /// @return True if the module type is supported, false otherwise.
     function supportsModule(uint256 moduleTypeId) external view virtual returns (bool) {
-        if (moduleTypeId == MODULE_TYPE_VALIDATOR ||
+        if (
+            moduleTypeId == MODULE_TYPE_VALIDATOR ||
             moduleTypeId == MODULE_TYPE_EXECUTOR ||
             moduleTypeId == MODULE_TYPE_FALLBACK ||
             moduleTypeId == MODULE_TYPE_HOOK ||
             moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 ||
             moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337 ||
-            moduleTypeId == MODULE_TYPE_MULTI)
-        {
+            moduleTypeId == MODULE_TYPE_MULTI
+        ) {
             return true;
         }
         return false;
@@ -422,8 +376,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         (CallType callType, ExecType execType) = mode.decodeBasic();
 
         // Return true if both the call type and execution type are supported.
-        return (callType == CALLTYPE_SINGLE || callType == CALLTYPE_BATCH || callType == CALLTYPE_DELEGATECALL)
-            && (execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY);
+        return
+            (callType == CALLTYPE_SINGLE || callType == CALLTYPE_BATCH || callType == CALLTYPE_DELEGATECALL) &&
+            (execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY);
     }
 
     /// @notice Determines whether a module is installed on the smart account.
@@ -440,10 +395,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @dev In case default validator is initialized, two other SLOADS from _areSentinelListsInitialized() are not checked,
     /// this method should not introduce huge gas overhead.
     function isInitialized() public view returns (bool) {
-        return (
-            IValidator(_DEFAULT_VALIDATOR).isInitialized(address(this)) ||
-            _areSentinelListsInitialized()
-        );
+        return (IValidator(_DEFAULT_VALIDATOR).isInitialized(address(this)) || _areSentinelListsInitialized());
     }
 
     /// Returns the account's implementation ID.
@@ -508,7 +460,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// This is part of the UUPS (Universal Upgradeable Proxy Standard) pattern.
     /// @param newImplementation The address of the new implementation to upgrade to.
     function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) onlyEntryPointOrSelf {
-        if(_amIERC7702()) {
+        if (_amIERC7702()) {
             revert ERC7702AccountCannotBeUpgradedThisWay();
         }
     }
@@ -525,7 +477,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 mstore(0x0, 0xaed59595) // NotInitializable()
                 revert(0x1c, 0x04)
             }
-            
+
             saltAndDelegation := calldataload(data.offset)
 
             // initData
@@ -540,7 +492,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             cleanedSignature.offset := add(u, 0x20)
             cleanedSignature.length := calldataload(u)
         }
-        
+
         // check r is valid
         bytes32 r = LibPREP.rPREP(address(this), keccak256(initData), saltAndDelegation);
         if (r == bytes32(0)) {
@@ -551,23 +503,24 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
 
     // checks if there's at least one validator initialized
     function _checkInitializedValidators() internal view {
-        if(!_amIERC7702() && !IValidator(_DEFAULT_VALIDATOR).isInitialized(address(this))) {
+        if (!_amIERC7702() && !IValidator(_DEFAULT_VALIDATOR).isInitialized(address(this))) {
             unchecked {
                 SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
                 address next = validators.entries[SENTINEL];
                 while (next != ZERO_ADDRESS && next != SENTINEL) {
-                    if(IValidator(next).isInitialized(address(this))) {
+                    if (IValidator(next).isInitialized(address(this))) {
                         break;
                     }
                     next = validators.getNext(next);
                 }
-                if(next == SENTINEL) { //went through all validators and none was initialized
+                if (next == SENTINEL) {
+                    //went through all validators and none was initialized
                     revert CanNotRemoveLastValidator();
                 }
             }
         }
     }
-    
+
     /// @dev EIP712 domain name and version.
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
         name = "Nexus";

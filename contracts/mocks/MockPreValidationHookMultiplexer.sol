@@ -36,7 +36,7 @@ contract MockPreValidationHookMultiplexer is IPreValidationHookERC1271, IPreVali
 
         for (uint256 i = 0; i < hooks.length; i++) {
             bytes memory subHookOnInstallCalldata = abi.encodeCall(IModule.onInstall, hookData[i]);
-            (bool success,) = hooks[i].call(abi.encodePacked(subHookOnInstallCalldata, msg.sender));
+            (bool success, ) = hooks[i].call(abi.encodePacked(subHookOnInstallCalldata, msg.sender));
             require(success, OnInstallFailed(hooks[i]));
         }
     }
@@ -54,7 +54,7 @@ contract MockPreValidationHookMultiplexer is IPreValidationHookERC1271, IPreVali
 
         for (uint256 i = 0; i < hooks.length; i++) {
             bytes memory subHookOnUninstallCalldata = abi.encodeCall(IModule.onUninstall, hookData[i]);
-            (bool success,) = hooks[i].call(abi.encodePacked(subHookOnUninstallCalldata, msg.sender));
+            (bool success, ) = hooks[i].call(abi.encodePacked(subHookOnUninstallCalldata, msg.sender));
             require(success, OnUninstallFailed(hooks[i]));
         }
     }
@@ -63,11 +63,7 @@ contract MockPreValidationHookMultiplexer is IPreValidationHookERC1271, IPreVali
         PackedUserOperation calldata userOp,
         uint256 missingAccountFunds,
         bytes32 userOpHash
-    )
-        external
-        view
-        returns (bytes32 hookHash, bytes memory hookSignature)
-    {
+    ) external view returns (bytes32 hookHash, bytes memory hookSignature) {
         HookConfig storage config = accountConfig[MODULE_TYPE_PREVALIDATION_HOOK_ERC4337][msg.sender];
 
         if (!config.initialized) {
@@ -79,7 +75,12 @@ contract MockPreValidationHookMultiplexer is IPreValidationHookERC1271, IPreVali
         PackedUserOperation memory op = userOp;
 
         for (uint256 i = 0; i < config.hooks.length; i++) {
-            bytes memory subHookData = abi.encodeWithSelector(IPreValidationHookERC4337.preValidationHookERC4337.selector, op, missingAccountFunds, hookHash);
+            bytes memory subHookData = abi.encodeWithSelector(
+                IPreValidationHookERC4337.preValidationHookERC4337.selector,
+                op,
+                missingAccountFunds,
+                hookHash
+            );
             (bool success, bytes memory result) = config.hooks[i].staticcall(abi.encodePacked(subHookData, msg.sender));
             if (!success) {
                 assembly {
@@ -97,11 +98,7 @@ contract MockPreValidationHookMultiplexer is IPreValidationHookERC1271, IPreVali
         address sender,
         bytes32 hash,
         bytes calldata signature
-    )
-        external
-        view
-        returns (bytes32 hookHash, bytes memory hookSignature)
-    {
+    ) external view returns (bytes32 hookHash, bytes memory hookSignature) {
         HookConfig storage config = accountConfig[MODULE_TYPE_PREVALIDATION_HOOK_ERC1271][msg.sender];
 
         if (!config.initialized) {
@@ -112,7 +109,12 @@ contract MockPreValidationHookMultiplexer is IPreValidationHookERC1271, IPreVali
         hookSignature = signature;
 
         for (uint256 i = 0; i < config.hooks.length; i++) {
-            bytes memory subHookData = abi.encodeWithSelector(IPreValidationHookERC1271.preValidationHookERC1271.selector, sender, hookHash, hookSignature);
+            bytes memory subHookData = abi.encodeWithSelector(
+                IPreValidationHookERC1271.preValidationHookERC1271.selector,
+                sender,
+                hookHash,
+                hookSignature
+            );
             (bool success, bytes memory result) = config.hooks[i].staticcall(abi.encodePacked(subHookData, msg.sender));
             if (!success) {
                 assembly {
@@ -131,8 +133,9 @@ contract MockPreValidationHookMultiplexer is IPreValidationHookERC1271, IPreVali
 
     function isInitialized(address smartAccount) external view returns (bool) {
         // Account is initialized if either hook type is initialized
-        return accountConfig[MODULE_TYPE_PREVALIDATION_HOOK_ERC4337][smartAccount].initialized
-            || accountConfig[MODULE_TYPE_PREVALIDATION_HOOK_ERC1271][smartAccount].initialized;
+        return
+            accountConfig[MODULE_TYPE_PREVALIDATION_HOOK_ERC4337][smartAccount].initialized ||
+            accountConfig[MODULE_TYPE_PREVALIDATION_HOOK_ERC1271][smartAccount].initialized;
     }
 
     function isHookTypeInitialized(address smartAccount, uint256 hookType) external view returns (bool) {

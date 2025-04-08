@@ -18,11 +18,7 @@ contract MockValidator_7739v2 is ERC7739Validator {
         return _validateSignatureForOwner(owner, userOpHash, userOp.signature) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
     }
 
-    function isValidSignatureWithSender(
-        address sender,
-        bytes32 hash,
-        bytes calldata signature
-    ) external view virtual returns (bytes4) {
+    function isValidSignatureWithSender(address sender, bytes32 hash, bytes calldata signature) external view virtual returns (bytes4) {
         return 0x77390002;
     }
 

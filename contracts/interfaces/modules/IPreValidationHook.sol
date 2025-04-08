@@ -14,7 +14,11 @@ interface IPreValidationHookERC1271 is IModule {
     /// @param data The signature data to validate
     /// @return hookHash The hash after applying the pre-validation hook
     /// @return hookSignature The signature after applying the pre-validation hook
-    function preValidationHookERC1271(address sender, bytes32 hash, bytes calldata data) external view returns (bytes32 hookHash, bytes memory hookSignature);
+    function preValidationHookERC1271(
+        address sender,
+        bytes32 hash,
+        bytes calldata data
+    ) external view returns (bytes32 hookHash, bytes memory hookSignature);
 }
 
 /// @title Nexus - IPreValidationHookERC4337 Interface
@@ -31,7 +35,5 @@ interface IPreValidationHookERC4337 is IModule {
         PackedUserOperation calldata userOp,
         uint256 missingAccountFunds,
         bytes32 userOpHash
-    )
-        external
-        returns (bytes32 hookHash, bytes memory hookSignature);
+    ) external returns (bytes32 hookHash, bytes memory hookSignature);
 }

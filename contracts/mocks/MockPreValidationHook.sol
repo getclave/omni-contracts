@@ -15,7 +15,7 @@ contract MockPreValidationHook is IPreValidationHookERC1271, IPreValidationHookE
         }
     }
 
-    function onUninstall(bytes calldata) external override { }
+    function onUninstall(bytes calldata) external override {}
 
     function isModuleType(uint256 moduleTypeId) external pure returns (bool) {
         return moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337 || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271;
@@ -25,7 +25,11 @@ contract MockPreValidationHook is IPreValidationHookERC1271, IPreValidationHookE
         return true;
     }
 
-    function preValidationHookERC1271(address, bytes32 hash, bytes calldata data) external pure returns (bytes32 hookHash, bytes memory hookSignature) {
+    function preValidationHookERC1271(
+        address,
+        bytes32 hash,
+        bytes calldata data
+    ) external pure returns (bytes32 hookHash, bytes memory hookSignature) {
         return (hash, data);
     }
 
@@ -33,11 +37,7 @@ contract MockPreValidationHook is IPreValidationHookERC1271, IPreValidationHookE
         PackedUserOperation calldata userOp,
         uint256,
         bytes32 userOpHash
-    )
-        external
-        pure
-        returns (bytes32 hookHash, bytes memory hookSignature)
-    {
+    ) external pure returns (bytes32 hookHash, bytes memory hookSignature) {
         return (userOpHash, userOp.signature);
     }
 }

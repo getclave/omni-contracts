@@ -15,17 +15,17 @@ contract MockAccountLocker is IHook {
         lockedAmount[token][account] = amount;
     }
 
-    function onInstall(bytes calldata data) external override { }
+    function onInstall(bytes calldata data) external override {}
 
-    function onUninstall(bytes calldata data) external override { }
+    function onUninstall(bytes calldata data) external override {}
 
     function isModuleType(uint256 moduleTypeId) external pure override returns (bool) {
         return moduleTypeId == MODULE_TYPE_HOOK;
     }
 
-    function isInitialized(address smartAccount) external view override returns (bool) { }
+    function isInitialized(address smartAccount) external view override returns (bool) {}
 
-    function preCheck(address msgSender, uint256 msgValue, bytes calldata msgData) external override returns (bytes memory hookData) { }
+    function preCheck(address msgSender, uint256 msgValue, bytes calldata msgData) external override returns (bytes memory hookData) {}
 
-    function postCheck(bytes calldata hookData) external override { }
+    function postCheck(bytes calldata hookData) external override {}
 }

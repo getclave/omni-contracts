@@ -22,10 +22,10 @@ contract MockMultiModule is IModule {
     }
 
     function someFallbackFunction(Execution calldata execution) external {
-        IERC7579Account(msg.sender).executeFromExecutor{value: execution.value}({
-                    mode: ModeLib.encodeSimpleSingle(),
-                    executionCalldata: ExecLib.encodeSingle(execution.target, execution.value, execution.callData)
-                });
+        IERC7579Account(msg.sender).executeFromExecutor{ value: execution.value }({
+            mode: ModeLib.encodeSimpleSingle(),
+            executionCalldata: ExecLib.encodeSingle(execution.target, execution.value, execution.callData)
+        });
     }
 
     function getConfig(address smartAccount, uint256 moduleTypeId) external view returns (bytes32) {
@@ -36,9 +36,7 @@ contract MockMultiModule is IModule {
         if (data.length >= 0x21) {
             uint256 moduleTypeId = uint256(uint8(bytes1(data[:1])));
             configs[moduleTypeId][msg.sender] = bytes32(data[1:33]);
-        } else {
-            
-        }
+        } else {}
     }
 
     function onUninstall(bytes calldata data) external override {

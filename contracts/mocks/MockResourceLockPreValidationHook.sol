@@ -69,11 +69,7 @@ contract MockResourceLockPreValidationHook is IPreValidationHookERC4337, IPreVal
         PackedUserOperation calldata userOp,
         uint256 missingAccountFunds,
         bytes32 userOpHash
-    )
-        external
-        view
-        returns (bytes32 hookHash, bytes memory hookSignature)
-    {
+    ) external view returns (bytes32 hookHash, bytes memory hookSignature) {
         address account = _msgSender();
         require(enoughETHAvailable(account, missingAccountFunds), InsufficientUnlockedETH(missingAccountFunds));
         return (userOpHash, userOp.signature);
@@ -94,12 +90,7 @@ contract MockResourceLockPreValidationHook is IPreValidationHookERC4337, IPreVal
         address sender,
         bytes32 hash,
         bytes calldata data
-    )
-        external
-        view
-        override
-        returns (bytes32 hookHash, bytes memory hookSignature)
-    {
+    ) external view override returns (bytes32 hookHash, bytes memory hookSignature) {
         address account = _msgSender();
         require(notResourceLocked(account, sender), SenderIsResourceLocked());
         return (hash, data);

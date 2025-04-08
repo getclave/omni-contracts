@@ -51,7 +51,13 @@ contract K1ValidatorFactory is Stakeable {
     /// @param factoryOwner The address of the factory owner.
     /// @param k1Validator The address of the K1 Validator module to be used for all deployments.
     /// @param bootstrapper The address of the Bootstrapper module to be used for all deployments.
-    constructor(address implementation, address factoryOwner, address k1Validator, NexusBootstrap bootstrapper, IERC7484 registry) Stakeable(factoryOwner) {
+    constructor(
+        address implementation,
+        address factoryOwner,
+        address k1Validator,
+        NexusBootstrap bootstrapper,
+        IERC7484 registry
+    ) Stakeable(factoryOwner) {
         require(
             !(implementation == address(0) || k1Validator == address(0) || address(bootstrapper) == address(0) || factoryOwner == address(0)),
             ZeroAddressNotAllowed()
@@ -68,7 +74,12 @@ contract K1ValidatorFactory is Stakeable {
     /// @param attesters The list of attesters for the Nexus.
     /// @param threshold The threshold for the Nexus.
     /// @return The address of the newly created Nexus.
-    function createAccount(address eoaOwner, uint256 index, address[] calldata attesters, uint8 threshold) external payable returns (address payable) {
+    function createAccount(
+        address eoaOwner,
+        uint256 index,
+        address[] calldata attesters,
+        uint8 threshold
+    ) external payable returns (address payable) {
         // Compute the salt for deterministic deployment
         bytes32 salt = keccak256(abi.encodePacked(eoaOwner, index, attesters, threshold));
 
@@ -77,13 +88,7 @@ contract K1ValidatorFactory is Stakeable {
             address(BOOTSTRAPPER),
             abi.encodeCall(
                 BOOTSTRAPPER.initNexusWithSingleValidator,
-                (K1_VALIDATOR, abi.encodePacked(eoaOwner),
-                    RegistryConfig({
-                        registry: REGISTRY,
-                        attesters: attesters,
-                        threshold: threshold
-                    })
-                )
+                (K1_VALIDATOR, abi.encodePacked(eoaOwner), RegistryConfig({ registry: REGISTRY, attesters: attesters, threshold: threshold }))
             )
         );
 
@@ -106,11 +111,7 @@ contract K1ValidatorFactory is Stakeable {
         uint256 index,
         address[] calldata attesters,
         uint8 threshold
-    )
-        external
-        view
-        returns (address payable expectedAddress)
-    {
+    ) external view returns (address payable expectedAddress) {
         // Compute the salt for deterministic deployment
         bytes32 salt = keccak256(abi.encodePacked(eoaOwner, index, attesters, threshold));
 
@@ -119,13 +120,7 @@ contract K1ValidatorFactory is Stakeable {
             address(BOOTSTRAPPER),
             abi.encodeCall(
                 BOOTSTRAPPER.initNexusWithSingleValidator,
-                (K1_VALIDATOR, abi.encodePacked(eoaOwner),
-                    RegistryConfig({
-                        registry: REGISTRY,
-                        attesters: attesters,
-                        threshold: threshold
-                    })
-                )
+                (K1_VALIDATOR, abi.encodePacked(eoaOwner), RegistryConfig({ registry: REGISTRY, attesters: attesters, threshold: threshold }))
             )
         );
 
