@@ -33,10 +33,6 @@ const config: HardhatUserConfig = {
 		},
 		...dynamicNetworkConfig(),
 	},
-	docgen: {
-		projectName: "Nexus",
-		projectDescription: "Nexus - Biconomy Modular Smart Account - ERC-7579",
-	},
 };
 
 export default config;
