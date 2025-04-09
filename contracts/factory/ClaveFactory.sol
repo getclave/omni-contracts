@@ -127,12 +127,27 @@ contract ClaveFactory is Stakeable, EIP712 {
         return payable(account);
     }
 
+    function getDigest(
+        bytes32 salt,
+        WebAuthnValidatorData calldata validatorData,
+        bytes32 authenticatorIdHash,
+        BootstrapConfig[] calldata executors,
+        BootstrapConfig calldata hook,
+        BootstrapConfig[] calldata fallbacks
+    ) public view returns (bytes32) {
+        return _hashTypedData(_hashCreateAccount(salt, validatorData, authenticatorIdHash, executors, hook, fallbacks));
+    }
+
     /// @notice Computes the expected address of a Nexus contract using the factory's deterministic deployment algorithm.
     /// @param salt The salt for the deterministic deployment.
     /// @return expectedAddress The expected address at which the Nexus contract will be deployed if the provided parameters are used.
     function computeAccountAddress(bytes32 salt) external view returns (address payable expectedAddress) {
         // Predict the deterministic address using the LibClone library
         expectedAddress = payable(LibClone.predictDeterministicAddressERC1967(ACCOUNT_IMPLEMENTATION, salt, address(this)));
+    }
+
+    function domainSeparator() public view returns (bytes32) {
+        return _domainSeparator();
     }
 
     function _hashCreateAccount(
