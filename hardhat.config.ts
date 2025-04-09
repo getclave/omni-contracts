@@ -13,30 +13,26 @@ const SHOULD_ENABLE_VIA_IR: Boolean = process.env.SHOULD_ENABLE_VIA_IR
   : true;
 
 const config: HardhatUserConfig = {
-	solidity: {
-		version: "0.8.27",
-		settings: {
-			viaIR: SHOULD_ENABLE_VIA_IR,
-			optimizer: {
-				enabled: true,
-				runs: 999,
-				details: {
-					yul: true,
-				},
-			},
-			evmVersion: "cancun",
-		},
-	},
-	networks: {
-		hardhat: {
-			allowUnlimitedContractSize: true,
-		},
-		...dynamicNetworkConfig(),
-	},
-	docgen: {
-		projectName: "Nexus",
-		projectDescription: "Nexus - Biconomy Modular Smart Account - ERC-7579",
-	},
+  solidity: {
+    version: "0.8.27",
+    settings: {
+      viaIR: SHOULD_ENABLE_VIA_IR,
+      optimizer: {
+        enabled: true,
+        runs: 999,
+        details: {
+          yul: true,
+        },
+      },
+      evmVersion: "cancun",
+    },
+  },
+  networks: {
+    hardhat: {
+      allowUnlimitedContractSize: true,
+    },
+    ...dynamicNetworkConfig(),
+  },
 };
 
 export default config;
