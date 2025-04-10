@@ -34,24 +34,23 @@ struct WebAuthnValidatorData {
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract ClaveFactory is Stakeable, EIP712 {
-    bytes32 private constant BOOTSTRAP_CONFIG_TYPEHASH = keccak256("BootstrapConfig(address module,bytes data)");
-    bytes32 private constant WEB_AUTHN_VALIDATOR_DATA_TYPEHASH = keccak256("WebAuthnValidatorData(uint256 pubKeyX,uint256 pubKeyY)");
-    bytes32 private constant CREATE_ACCOUNT_TYPEHASH =
+    bytes32 private constant _WEB_AUTHN_VALIDATOR_DATA_TYPEHASH = keccak256("WebAuthnValidatorData(uint256 pubKeyX,uint256 pubKeyY)");
+    bytes32 private constant _CREATE_ACCOUNT_TYPEHASH =
         keccak256(
-            "CreateAccount(bytes32 salt,WebAuthnValidatorData validatorData,bytes32 authenticatorIdHash,BootstrapConfig[] executors,BootstrapConfig hook,BootstrapConfig[] fallbacks)BootstrapConfig(address module,bytes data)WebAuthnValidatorData(uint256 pubKeyX,uint256 pubKeyY)"
+            "CreateAccount(bytes32 salt,WebAuthnValidatorData validatorData,bytes32 authenticatorIdHash)WebAuthnValidatorData(uint256 pubKeyX,uint256 pubKeyY)"
         );
 
     /// @notice Stores the implementation contract address used to create new Nexus instances.
     /// @dev This address is set once upon deployment and cannot be changed afterwards.
     address public immutable ACCOUNT_IMPLEMENTATION;
 
-    /// @notice Stores the WebAuthn Validator module address.
-    /// @dev This address is set once upon deployment and cannot be changed afterwards.
-    address public immutable WEB_AUTHN_VALIDATOR;
-
     /// @notice Stores the Bootstrapper module address.
     /// @dev This address is set once upon deployment and cannot be changed afterwards.
     NexusBootstrap public immutable BOOTSTRAPPER;
+
+    /// @notice Stores the WebAuthn Validator module address.
+    /// @dev This address is set once upon deployment and cannot be changed afterwards.
+    address public immutable WEB_AUTHN_VALIDATOR;
 
     IERC7484 public immutable REGISTRY;
 
@@ -104,7 +103,7 @@ contract ClaveFactory is Stakeable, EIP712 {
         bytes calldata signature
     ) external payable returns (address payable) {
         {
-            bytes32 digest = _hashTypedData(_hashCreateAccount(salt, validatorData, authenticatorIdHash, executors, hook, fallbacks));
+            bytes32 digest = getDigest(salt, validatorData, authenticatorIdHash);
             address signer = ECDSA.recover(digest, signature);
             require(signer == owner(), "Invalid signature");
         }
@@ -127,23 +126,16 @@ contract ClaveFactory is Stakeable, EIP712 {
         return payable(account);
     }
 
-    function getDigest(
-        bytes32 salt,
-        WebAuthnValidatorData calldata validatorData,
-        bytes32 authenticatorIdHash,
-        BootstrapConfig[] calldata executors,
-        BootstrapConfig calldata hook,
-        BootstrapConfig[] calldata fallbacks
-    ) public view returns (bytes32) {
-        return _hashTypedData(_hashCreateAccount(salt, validatorData, authenticatorIdHash, executors, hook, fallbacks));
-    }
-
     /// @notice Computes the expected address of a Nexus contract using the factory's deterministic deployment algorithm.
     /// @param salt The salt for the deterministic deployment.
     /// @return expectedAddress The expected address at which the Nexus contract will be deployed if the provided parameters are used.
     function computeAccountAddress(bytes32 salt) external view returns (address payable expectedAddress) {
         // Predict the deterministic address using the LibClone library
         expectedAddress = payable(LibClone.predictDeterministicAddressERC1967(ACCOUNT_IMPLEMENTATION, salt, address(this)));
+    }
+
+    function getDigest(bytes32 salt, WebAuthnValidatorData calldata validatorData, bytes32 authenticatorIdHash) public view returns (bytes32) {
+        return _hashTypedData(_hashCreateAccount(salt, validatorData, authenticatorIdHash));
     }
 
     function domainSeparator() public view returns (bytes32) {
@@ -153,39 +145,13 @@ contract ClaveFactory is Stakeable, EIP712 {
     function _hashCreateAccount(
         bytes32 salt,
         WebAuthnValidatorData calldata validatorData,
-        bytes32 authenticatorIdHash,
-        BootstrapConfig[] calldata executors,
-        BootstrapConfig calldata hook,
-        BootstrapConfig[] calldata fallbacks
+        bytes32 authenticatorIdHash
     ) internal pure returns (bytes32) {
-        bytes32[] memory executorsHashes = new bytes32[](executors.length);
-        for (uint256 i = 0; i < executors.length; i++) {
-            executorsHashes[i] = _hashBootstrapConfig(executors[i]);
-        }
-        bytes32[] memory fallbacksHashes = new bytes32[](fallbacks.length);
-        for (uint256 i = 0; i < fallbacks.length; i++) {
-            fallbacksHashes[i] = _hashBootstrapConfig(fallbacks[i]);
-        }
-        return
-            keccak256(
-                abi.encode(
-                    CREATE_ACCOUNT_TYPEHASH,
-                    salt,
-                    _hashWebAuthnValidatorData(validatorData),
-                    authenticatorIdHash,
-                    keccak256(abi.encodePacked(executorsHashes)),
-                    _hashBootstrapConfig(hook),
-                    keccak256(abi.encodePacked(fallbacksHashes))
-                )
-            );
-    }
-
-    function _hashBootstrapConfig(BootstrapConfig calldata config) internal pure returns (bytes32) {
-        return keccak256(abi.encode(BOOTSTRAP_CONFIG_TYPEHASH, config.module, keccak256(config.data)));
+        return keccak256(abi.encode(_CREATE_ACCOUNT_TYPEHASH, salt, _hashWebAuthnValidatorData(validatorData), authenticatorIdHash));
     }
 
     function _hashWebAuthnValidatorData(WebAuthnValidatorData calldata validatorData) internal pure returns (bytes32) {
-        return keccak256(abi.encode(WEB_AUTHN_VALIDATOR_DATA_TYPEHASH, validatorData.pubKeyX, validatorData.pubKeyY));
+        return keccak256(abi.encode(_WEB_AUTHN_VALIDATOR_DATA_TYPEHASH, validatorData.pubKeyX, validatorData.pubKeyY));
     }
 
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
